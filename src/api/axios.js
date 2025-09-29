@@ -1,15 +1,15 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,
+  baseURL: "https://pitychick-production.up.railway.app/api",
+  withCredentials: false, // Change to false dulu
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
 });
 
-// Set Authorization header otomatis kalau token ada di localStorage
+// Set Authorization header otomatis
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("authToken");
   if (token) {
@@ -18,12 +18,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor untuk handle errors
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error("API Error:", error.response?.data || error.message);
     if (error.response?.status === 401) {
-      // Redirect ke login jika unauthorized
       localStorage.removeItem("authToken");
       window.location.href = "/login";
     }
