@@ -1,11 +1,13 @@
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const api = axios.create({
-  baseURL: "https://pitychick-production.up.railway.app/api",
-  withCredentials: false, // Change to false dulu
+  baseURL: `${API_URL}/api`,
+  withCredentials: false,
   headers: {
     "Content-Type": "application/json",
-    Accept: "application/json",
+    "Accept": "application/json",
   },
 });
 
