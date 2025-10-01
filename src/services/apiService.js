@@ -1,26 +1,68 @@
 // src/services/apiService.js
 import api from '../api/axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pitychick-production.up.railway.app';
+
+// Helper function untuk mendapatkan full image URL
+export const getImageUrl = (imagePath) => {
+  if (!imagePath) return '/placeholder-image.jpg';
+  
+  // Jika sudah full URL, return langsung
+  if (imagePath.startsWith('http')) {
+    return imagePath;
+  }
+  
+  // Jika path relative, gabungkan dengan base URL
+  if (imagePath.startsWith('/storage/')) {
+    return `${API_BASE_URL}${imagePath}`;
+  }
+  
+  // Jika path tanpa slash depan
+  if (imagePath.startsWith('storage/')) {
+    return `${API_BASE_URL}/${imagePath}`;
+  }
+  
+  // Default case - tambahkan /storage/ jika perlu
+  return `${API_BASE_URL}/storage/${imagePath}`;
+};
+
 export const apiService = {
-  // Menu
+  // Menu dengan image URL processing
   async getMenus() {
     try {
       const response = await api.get('/api/menus');
-      return response.data;
+      console.log('Menus response:', response.data);
+      
+      const menus = response.data.data || [];
+      
+      // Process image URLs untuk mendapatkan full URL
+      return menus.map(menu => ({
+        ...menu,
+        image_url: getImageUrl(menu.image) // Tambahkan property image_url
+      }));
+      
     } catch (error) {
       console.error('Error fetching menus:', error);
-      throw error;
+      return [];
     }
   },
 
-  // Home
+  // Home dengan image URL processing
   async getHomeSettings() {
     try {
       const response = await api.get('/api/home');
-      return response.data;
+      console.log('Home response:', response.data);
+      
+      const homeData = response.data || {};
+      
+      return {
+        ...homeData,
+        background_image_url: getImageUrl(homeData.background_image_url)
+      };
+      
     } catch (error) {
       console.error('Error fetching home settings:', error);
-      throw error;
+      return {};
     }
   },
 
@@ -35,11 +77,17 @@ export const apiService = {
     }
   },
 
-  // Gallery
+  // Gallery dengan image URL processing
   async getGallery() {
     try {
       const response = await api.get('/api/gallery');
-      return response.data;
+      const galleryData = response.data.data || response.data || [];
+      
+      // Process image URLs untuk gallery
+      return galleryData.map(item => ({
+        ...item,
+        image_url: getImageUrl(item.image)
+      }));
     } catch (error) {
       console.error('Error fetching gallery:', error);
       throw error;
