@@ -21,6 +21,7 @@ export default defineConfig({
   },
   preview: {
     host: '0.0.0.0',
-    port: 4173
+    port: 4173,
+    allowedHosts: ['frontend-production-c996.up.railway.app'] // TAMBAH BARIS INI
   }
 })
