@@ -1,23 +1,45 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import apiService from "../services/apiService"; // GANTI
-import { getImageUrl } from "../services/apiService"; // GANTI
+import apiService from "../services/apiService";
+import { getImageUrl } from "../services/apiService";
 import Button from "../layouts/Button";
 
 const About = () => {
   const [isStoryVisible, setIsStoryVisible] = useState(false);
   const [aboutData, setAboutData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    apiService.getAbout() // GANTI
+    apiService.getAbout()
       .then(data => {
-        // Handle response structure yang berbeda
-        const aboutData = data.data || data || {};
+        console.log("Raw about data:", data); // Debug log
+        
+        // Handle berbagai kemungkinan response structure
+        let aboutData = {};
+        
+        if (data && data.data) {
+          // Structure: { data: { ... } }
+          aboutData = data.data;
+        } else if (data && data.about) {
+          // Structure: { about: { ... } }
+          aboutData = data.about;
+        } else if (data && typeof data === 'object') {
+          // Structure langsung object
+          aboutData = data;
+        } else {
+          // Data kosong atau tidak valid
+          aboutData = {};
+        }
+        
+        console.log("Processed about data:", aboutData); // Debug log
         setAboutData(aboutData);
+        setError(null);
       })
       .catch(err => {
         console.error("Failed to fetch about data", err);
+        setError("Failed to load about data");
+        setAboutData({}); // Set empty object sebagai fallback
       })
       .finally(() => {
         setLoading(false);
@@ -35,7 +57,26 @@ const About = () => {
     );
   }
 
-  if (!aboutData) return <div className="text-center py-10 text-red-600">Failed to load about data</div>;
+  if (error) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback data jika aboutData null atau empty
+  const displayData = aboutData || {};
+  const mainImageUrl = getImageUrl(displayData.main_image || displayData.image);
+  const storyImageUrl = getImageUrl(displayData.story_image);
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row items-center lg:px-32 px-5 py-16 gap-10 relative">
@@ -48,14 +89,16 @@ const About = () => {
         viewport={{ once: true }}
       >
         <motion.img
-          src={getImageUrl(aboutData.main_image)} // GANTI
+          src={mainImageUrl}
           alt="About us"
           className="w-full max-w-[280px] h-auto rounded-xl shadow-2xl shadow-black/30"
           whileHover={{ scale: 1.05, rotate: 1 }}
           transition={{ type: "spring", stiffness: 200 }}
           onError={(e) => {
+            console.error("Image failed to load:", mainImageUrl);
             e.target.src = '/images/placeholder-about.jpg';
           }}
+          onLoad={() => console.log("Image loaded successfully:", mainImageUrl)}
         />
       </motion.div>
 
@@ -73,7 +116,7 @@ const About = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          {aboutData.title || "About Us"}
+          {displayData.title || "About PITY Chick"}
         </motion.h1>
 
         <motion.p
@@ -83,7 +126,7 @@ const About = () => {
           viewport={{ once: true }}
           className="text-gray-700"
         >
-          {aboutData.description_1 || "No description available."}
+          {displayData.description_1 || displayData.description || "Welcome to PITY Chick, your favorite crispy chicken destination."}
         </motion.p>
 
         <motion.p
@@ -93,25 +136,27 @@ const About = () => {
           viewport={{ once: true }}
           className="text-gray-700"
         >
-          {aboutData.description_2 || ""}
+          {displayData.description_2 || "We serve the best quality chicken with authentic recipes that will keep you coming back for more."}
         </motion.p>
 
-        <motion.div
-          className="flex justify-center lg:justify-start"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-          viewport={{ once: true }}
-        >
-          <div onClick={() => setIsStoryVisible(true)}>
-            <Button title="Story Us" />
-          </div>
-        </motion.div>
+        {displayData.story_image && (
+          <motion.div
+            className="flex justify-center lg:justify-start"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <div onClick={() => setIsStoryVisible(true)}>
+              <Button title="Our Story" />
+            </div>
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Modal Image */}
       <AnimatePresence>
-        {isStoryVisible && (
+        {isStoryVisible && storyImageUrl && (
           <motion.div
             className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
             initial={{ opacity: 0 }}
@@ -132,10 +177,11 @@ const About = () => {
                 ✖
               </button>
               <img
-                src={getImageUrl(aboutData.story_image)} // GANTI
+                src={storyImageUrl}
                 alt="Our Story"
                 className="rounded-lg max-h-[80vh] w-full object-contain"
                 onError={(e) => {
+                  console.error("Story image failed to load:", storyImageUrl);
                   e.target.src = '/images/placeholder-story.jpg';
                 }}
               />

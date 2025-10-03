@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import apiService from "../services/apiService"; // GANTI
+import apiService from "../services/apiService";
 import { BsInstagram } from "react-icons/bs";
 import { Link as ScrollLink } from "react-scroll";
 import { Link } from "react-router-dom";
@@ -7,15 +7,39 @@ import { Link } from "react-router-dom";
 const Footer = () => {
   const [footer, setFooter] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    apiService.getFooter() // GANTI
+    apiService.getFooter()
       .then((data) => {
-        // Handle response structure yang berbeda
-        const footerData = data.data || data || {};
+        console.log("Raw footer data:", data); // Debug log
+        
+        // Handle berbagai kemungkinan response structure
+        let footerData = {};
+        
+        if (data && data.data) {
+          // Structure: { data: { ... } }
+          footerData = data.data;
+        } else if (data && data.footer) {
+          // Structure: { footer: { ... } }
+          footerData = data.footer;
+        } else if (data && typeof data === 'object') {
+          // Structure langsung object
+          footerData = data;
+        } else {
+          // Data kosong atau tidak valid
+          footerData = {};
+        }
+        
+        console.log("Processed footer data:", footerData); // Debug log
         setFooter(footerData);
+        setError(null);
       })
-      .catch((err) => console.error("Gagal fetch footer:", err))
+      .catch((err) => {
+        console.error("Gagal fetch footer:", err);
+        setError("Failed to load footer data");
+        setFooter({}); // Set empty object sebagai fallback
+      })
       .finally(() => {
         setLoading(false);
       });
@@ -24,18 +48,28 @@ const Footer = () => {
   if (loading) {
     return (
       <div className="bg-black text-white rounded-t-3xl mt-8 py-8 text-center">
-        <p>Loading footer...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+        <p className="mt-2">Loading footer...</p>
       </div>
     );
   }
 
-  if (!footer) {
+  if (error) {
     return (
       <div className="bg-black text-white rounded-t-3xl mt-8 py-8 text-center">
-        <p>Failed to load footer</p>
+        <p className="text-red-400">{error}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-2 bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+        >
+          Retry
+        </button>
       </div>
     );
   }
+
+  // Fallback data jika footer null atau empty
+  const displayData = footer || {};
 
   return (
     <div className="bg-black text-white rounded-t-3xl mt-8 md:mt-0">
@@ -43,8 +77,12 @@ const Footer = () => {
 
         {/* Brand Identity */}
         <div className="w-full md:w-1/4">
-          <h1 className="font-semibold text-xl pb-4">{footer.brand_name || "PITY Chick"}</h1>
-          <p className="text-sm text-gray-300">{footer.brand_description || "Restaurant description"}</p>
+          <h1 className="font-semibold text-xl pb-4">
+            {displayData.brand_name || displayData.name || "PITY Chick"}
+          </h1>
+          <p className="text-sm text-gray-300">
+            {displayData.brand_description || displayData.description || "Your favorite crispy chicken restaurant"}
+          </p>
         </div>
 
         {/* Links */}
@@ -73,10 +111,15 @@ const Footer = () => {
         <div>
           <h1 className="font-medium text-xl pb-4 pt-5 md:pt-0">Contact Us</h1>
           <nav className="flex flex-col gap-2">
-            <a href={`mailto:${footer.email}`} className="hover:text-red-500 cursor-pointer transition-colors">{footer.email || "email@example.com"}</a>
-            <a href={`tel:${footer.phone}`} className="hover:text-red-500 cursor-pointer transition-colors">{footer.phone || "+62 xxx-xxxx-xxxx"}</a>
-            <a href={footer.instagram || "#"} target="_blank" rel="noopener noreferrer" className="hover:text-red-500 cursor-pointer transition-colors">
-              <BsInstagram className="inline mr-2" /> Instagram
+            <a href={`mailto:${displayData.email}`} className="hover:text-red-500 cursor-pointer transition-colors">
+              {displayData.email || "contact@pitychick.com"}
+            </a>
+            <a href={`tel:${displayData.phone}`} className="hover:text-red-500 cursor-pointer transition-colors">
+              {displayData.phone || "+62 123-4567-8900"}
+            </a>
+            <a href={displayData.instagram || "#"} target="_blank" rel="noopener noreferrer" className="hover:text-red-500 cursor-pointer transition-colors">
+              <BsInstagram className="inline mr-2" /> 
+              {displayData.instagram ? "Instagram" : "Follow Us"}
             </a>
           </nav>
         </div>
@@ -85,14 +128,16 @@ const Footer = () => {
       {/* Footer Bottom Info */}
       <div>
         <p className="text-center py-4 text-gray-300">
-          {footer.footer_note ? (
+          {displayData.footer_note ? (
             <Link to="/portfolio" className="hover:underline text-inherit hover:text-white">
-              {footer.footer_note}
+              {displayData.footer_note}
             </Link>
           ) : (
-            `@${footer.brand_name || "PITY Chick"}`
+            `@${displayData.brand_name || displayData.name || "PITY Chick"}`
           )}{" "}
-          <span className="text-red-500">{footer.address || "Restaurant address"}</span>
+          <span className="text-red-500">
+            {displayData.address || "Jl. Restaurant No. 123, Indonesia"}
+          </span>
         </p>
       </div>
     </div>
