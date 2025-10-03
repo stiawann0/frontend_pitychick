@@ -8,38 +8,21 @@ const About = () => {
   const [isStoryVisible, setIsStoryVisible] = useState(false);
   const [aboutData, setAboutData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     apiService.getAbout()
       .then(data => {
-        console.log("Raw about data:", data); // Debug log
-        
-        // Handle berbagai kemungkinan response structure
-        let aboutData = {};
-        
-        if (data && data.data) {
-          // Structure: { data: { ... } }
-          aboutData = data.data;
-        } else if (data && data.about) {
-          // Structure: { about: { ... } }
-          aboutData = data.about;
-        } else if (data && typeof data === 'object') {
-          // Structure langsung object
-          aboutData = data;
-        } else {
-          // Data kosong atau tidak valid
-          aboutData = {};
-        }
-        
-        console.log("Processed about data:", aboutData); // Debug log
-        setAboutData(aboutData);
-        setError(null);
+        console.log("📊 About data received:", data);
+        setAboutData(data);
       })
       .catch(err => {
         console.error("Failed to fetch about data", err);
-        setError("Failed to load about data");
-        setAboutData({}); // Set empty object sebagai fallback
+        // Set minimal fallback data
+        setAboutData({
+          title: "About PITY Chick",
+          description_1: "Welcome to PITY Chick, your favorite crispy chicken destination.",
+          description_2: "We serve the best quality chicken with authentic recipes that will keep you coming back for more."
+        });
       })
       .finally(() => {
         setLoading(false);
@@ -57,14 +40,14 @@ const About = () => {
     );
   }
 
-  if (error) {
+  if (!aboutData) {
     return (
       <div className="min-h-screen flex justify-center items-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
+        <div className="text-center text-red-600">
+          <p>Failed to load about data</p>
           <button 
             onClick={() => window.location.reload()}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
           >
             Retry
           </button>
@@ -73,13 +56,29 @@ const About = () => {
     );
   }
 
-  // Fallback data jika aboutData null atau empty
-  const displayData = aboutData || {};
-  const mainImageUrl = getImageUrl(displayData.main_image || displayData.image);
-  const storyImageUrl = getImageUrl(displayData.story_image);
+  // Destructure dengan default values
+  const {
+    title = "About PITY Chick",
+    description_1 = "Welcome to PITY Chick, your favorite crispy chicken destination.",
+    description_2 = "We serve the best quality chicken with authentic recipes that will keep you coming back for more.",
+    main_image,
+    story_image
+  } = aboutData;
+
+  const mainImageUrl = main_image ? getImageUrl(main_image) : null;
+  const storyImageUrl = story_image ? getImageUrl(story_image) : null;
+
+  console.log("🎯 Processed data:", {
+    title,
+    description_1,
+    description_2,
+    mainImageUrl,
+    storyImageUrl
+  });
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row items-center lg:px-32 px-5 py-16 gap-10 relative">
+      
       {/* Image Section */}
       <motion.div
         className="w-full lg:w-1/2 flex justify-center"
@@ -88,18 +87,27 @@ const About = () => {
         transition={{ duration: 0.8, ease: "easeOut" }}
         viewport={{ once: true }}
       >
-        <motion.img
-          src={mainImageUrl}
-          alt="About us"
-          className="w-full max-w-[280px] h-auto rounded-xl shadow-2xl shadow-black/30"
-          whileHover={{ scale: 1.05, rotate: 1 }}
-          transition={{ type: "spring", stiffness: 200 }}
-          onError={(e) => {
-            console.error("Image failed to load:", mainImageUrl);
-            e.target.src = '/images/placeholder-about.jpg';
-          }}
-          onLoad={() => console.log("Image loaded successfully:", mainImageUrl)}
-        />
+        {mainImageUrl ? (
+          <motion.img
+            src={mainImageUrl}
+            alt={title}
+            className="w-full max-w-[280px] h-64 object-cover rounded-xl shadow-2xl shadow-black/30"
+            whileHover={{ scale: 1.05, rotate: 1 }}
+            transition={{ type: "spring", stiffness: 200 }}
+            onError={(e) => {
+              console.error("❌ Main image failed:", mainImageUrl);
+              e.target.src = '/images/placeholder-about.jpg';
+            }}
+            onLoad={() => console.log("✅ Main image loaded:", mainImageUrl)}
+          />
+        ) : (
+          <div className="w-full max-w-[280px] h-64 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center shadow-2xl shadow-black/30">
+            <div className="text-center text-gray-500">
+              <div className="text-4xl mb-2">🍗</div>
+              <p>About Image</p>
+            </div>
+          </div>
+        )}
       </motion.div>
 
       {/* Text Section */}
@@ -111,12 +119,12 @@ const About = () => {
         viewport={{ once: true }}
       >
         <motion.h1
-          className="font-semibold text-4xl text-center lg:text-left"
+          className="font-semibold text-4xl text-center lg:text-left text-gray-800"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          {displayData.title || "About PITY Chick"}
+          {title}
         </motion.h1>
 
         <motion.p
@@ -124,22 +132,24 @@ const About = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
           viewport={{ once: true }}
-          className="text-gray-700"
+          className="text-gray-700 text-lg leading-relaxed"
         >
-          {displayData.description_1 || displayData.description || "Welcome to PITY Chick, your favorite crispy chicken destination."}
+          {description_1}
         </motion.p>
 
-        <motion.p
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          viewport={{ once: true }}
-          className="text-gray-700"
-        >
-          {displayData.description_2 || "We serve the best quality chicken with authentic recipes that will keep you coming back for more."}
-        </motion.p>
+        {description_2 && (
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            viewport={{ once: true }}
+            className="text-gray-700 text-lg leading-relaxed"
+          >
+            {description_2}
+          </motion.p>
+        )}
 
-        {displayData.story_image && (
+        {storyImageUrl && (
           <motion.div
             className="flex justify-center lg:justify-start"
             initial={{ opacity: 0 }}
@@ -154,7 +164,7 @@ const About = () => {
         )}
       </motion.div>
 
-      {/* Modal Image */}
+      {/* Story Modal */}
       <AnimatePresence>
         {isStoryVisible && storyImageUrl && (
           <motion.div
@@ -164,7 +174,7 @@ const About = () => {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-white rounded-lg p-4 relative max-w-xl shadow-lg"
+              className="bg-white rounded-lg p-4 relative max-w-xl shadow-lg mx-4"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
@@ -172,7 +182,7 @@ const About = () => {
             >
               <button
                 onClick={() => setIsStoryVisible(false)}
-                className="absolute top-2 right-2 text-xl text-gray-600 hover:text-black z-10"
+                className="absolute top-2 right-2 text-xl text-gray-600 hover:text-black z-10 bg-white rounded-full w-8 h-8 flex items-center justify-center"
               >
                 ✖
               </button>
@@ -181,9 +191,10 @@ const About = () => {
                 alt="Our Story"
                 className="rounded-lg max-h-[80vh] w-full object-contain"
                 onError={(e) => {
-                  console.error("Story image failed to load:", storyImageUrl);
+                  console.error("❌ Story image failed:", storyImageUrl);
                   e.target.src = '/images/placeholder-story.jpg';
                 }}
+                onLoad={() => console.log("✅ Story image loaded:", storyImageUrl)}
               />
             </motion.div>
           </motion.div>
