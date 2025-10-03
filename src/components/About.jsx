@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import apiService from "../services/apiService";
-import { getImageUrl } from "../services/apiService";
 import Button from "../layouts/Button";
 
 const About = () => {
   const [isStoryVisible, setIsStoryVisible] = useState(false);
   const [aboutData, setAboutData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [imageErrors, setImageErrors] = useState({
+    main: false,
+    story: false
+  });
 
   useEffect(() => {
     apiService.getAbout()
@@ -17,17 +20,36 @@ const About = () => {
       })
       .catch(err => {
         console.error("Failed to fetch about data", err);
-        // Set minimal fallback data
+        // Set fallback data dengan gambar yang work
         setAboutData({
           title: "About PITY Chick",
           description_1: "Welcome to PITY Chick, your favorite crispy chicken destination.",
-          description_2: "We serve the best quality chicken with authentic recipes that will keep you coming back for more."
+          description_2: "We serve the best quality chicken with authentic recipes that will keep you coming back for more.",
+          main_image_url: 'https://pitychick-production.up.railway.app/storage/menu-images/q6IK9Ajy5xaDO97AFJaSUZjqvSr7qofiwB7WKZk2.jpg',
+          story_image_url: 'https://pitychick-production.up.railway.app/storage/menu-images/q6IK9Ajy5xaDO97AFJaSUZjqvSr7qofiwB7WKZk2.jpg'
         });
       })
       .finally(() => {
         setLoading(false);
       });
   }, []);
+
+  const handleImageError = (type, url) => {
+    console.error(`❌ ${type} image failed:`, url);
+    setImageErrors(prev => ({ ...prev, [type]: true }));
+    
+    // Fallback ke gambar menu yang work
+    if (type === 'main') {
+      const imgElement = document.querySelector('.main-image');
+      if (imgElement) {
+        imgElement.src = 'https://pitychick-production.up.railway.app/storage/menu-images/q6IK9Ajy5xaDO97AFJaSUZjqvSr7qofiwB7WKZk2.jpg';
+      }
+    }
+  };
+
+  const handleImageLoad = (type, url) => {
+    console.log(`✅ ${type} image loaded:`, url);
+  };
 
   if (loading) {
     return (
@@ -56,24 +78,21 @@ const About = () => {
     );
   }
 
-  // Destructure dengan default values
+  // Gunakan image_url dari apiService
   const {
     title = "About PITY Chick",
     description_1 = "Welcome to PITY Chick, your favorite crispy chicken destination.",
     description_2 = "We serve the best quality chicken with authentic recipes that will keep you coming back for more.",
-    main_image,
-    story_image
+    main_image_url,
+    story_image_url
   } = aboutData;
-
-  const mainImageUrl = main_image ? getImageUrl(main_image) : null;
-  const storyImageUrl = story_image ? getImageUrl(story_image) : null;
 
   console.log("🎯 Processed data:", {
     title,
     description_1,
     description_2,
-    mainImageUrl,
-    storyImageUrl
+    main_image_url,
+    story_image_url
   });
 
   return (
@@ -87,18 +106,15 @@ const About = () => {
         transition={{ duration: 0.8, ease: "easeOut" }}
         viewport={{ once: true }}
       >
-        {mainImageUrl ? (
+        {main_image_url ? (
           <motion.img
-            src={mainImageUrl}
+            src={main_image_url}
             alt={title}
-            className="w-full max-w-[280px] h-64 object-cover rounded-xl shadow-2xl shadow-black/30"
+            className="main-image w-full max-w-[280px] h-64 object-cover rounded-xl shadow-2xl shadow-black/30"
             whileHover={{ scale: 1.05, rotate: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
-            onError={(e) => {
-              console.error("❌ Main image failed:", mainImageUrl);
-              e.target.src = '/images/placeholder-about.jpg';
-            }}
-            onLoad={() => console.log("✅ Main image loaded:", mainImageUrl)}
+            onError={(e) => handleImageError('main', main_image_url)}
+            onLoad={() => handleImageLoad('main', main_image_url)}
           />
         ) : (
           <div className="w-full max-w-[280px] h-64 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center shadow-2xl shadow-black/30">
@@ -149,7 +165,7 @@ const About = () => {
           </motion.p>
         )}
 
-        {storyImageUrl && (
+        {story_image_url && (
           <motion.div
             className="flex justify-center lg:justify-start"
             initial={{ opacity: 0 }}
@@ -166,7 +182,7 @@ const About = () => {
 
       {/* Story Modal */}
       <AnimatePresence>
-        {isStoryVisible && storyImageUrl && (
+        {isStoryVisible && story_image_url && !imageErrors.story && (
           <motion.div
             className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
             initial={{ opacity: 0 }}
@@ -187,14 +203,11 @@ const About = () => {
                 ✖
               </button>
               <img
-                src={storyImageUrl}
+                src={story_image_url}
                 alt="Our Story"
                 className="rounded-lg max-h-[80vh] w-full object-contain"
-                onError={(e) => {
-                  console.error("❌ Story image failed:", storyImageUrl);
-                  e.target.src = '/images/placeholder-story.jpg';
-                }}
-                onLoad={() => console.log("✅ Story image loaded:", storyImageUrl)}
+                onError={() => handleImageError('story', story_image_url)}
+                onLoad={() => handleImageLoad('story', story_image_url)}
               />
             </motion.div>
           </motion.div>

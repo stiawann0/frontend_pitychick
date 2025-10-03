@@ -66,14 +66,31 @@ export const apiService = {
     }
   },
 
-  // About
+  // About - DIPERBAIKI: tambahkan image URL processing
   async getAbout() {
     try {
       const response = await api.get('/api/about');
-      return response.data;
+      console.log('About API response:', response.data);
+      
+      const aboutData = response.data || {};
+      
+      // Process image URLs untuk about - INI YANG DIPERBAIKI
+      return {
+        ...aboutData,
+        main_image_url: getImageUrl(aboutData.main_image),
+        story_image_url: getImageUrl(aboutData.story_image)
+      };
+      
     } catch (error) {
       console.error('Error fetching about data:', error);
-      throw error;
+      // Return fallback dengan image URLs yang sudah diproses
+      return {
+        title: "About PITY Chick",
+        description_1: "Welcome to PITY Chick, your favorite crispy chicken destination.",
+        description_2: "We serve the best quality chicken with authentic recipes that will keep you coming back for more.",
+        main_image_url: getImageUrl('menu-images/q6IK9Ajy5xaDO97AFJaSUZjqvSr7qofiwB7WKZk2.jpg'),
+        story_image_url: getImageUrl('menu-images/q6IK9Ajy5xaDO97AFJaSUZjqvSr7qofiwB7WKZk2.jpg')
+      };
     }
   },
 
