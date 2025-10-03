@@ -1,19 +1,36 @@
 import React, { useEffect, useState } from "react";
 import ReviewCard from "../layouts/ReviewCard";
-import axios from "axios";
+import apiService from "../services/apiService"; // GANTI
 
 const Review = () => {
   const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get("http://localhost:8000/api/reviews") // Ganti sesuai URL backend kamu
+    apiService.getReviews() // GANTI
       .then((response) => {
-        setReviews(response.data);
+        // Handle response structure yang berbeda
+        const reviewsData = response.data || response || [];
+        setReviews(reviewsData);
       })
       .catch((error) => {
         console.error("Error fetching reviews:", error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading reviews...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center md:px-32 px-5">
@@ -21,14 +38,18 @@ const Review = () => {
         Customer's Review
       </h1>
       <div className="flex md:flex-row gap-5 mt-5 flex-nowrap">
-        {reviews.map((review, index) => (
-          <ReviewCard
-            key={index}
-            img={review.img}
-            name={review.name}
-            description={review.description}
-          />
-        ))}
+        {reviews.length > 0 ? (
+          reviews.map((review, index) => (
+            <ReviewCard
+              key={index}
+              img={review.img}
+              name={review.name}
+              description={review.description}
+            />
+          ))
+        ) : (
+          <p className="text-gray-500">No reviews available</p>
+        )}
       </div>
     </div>
   );

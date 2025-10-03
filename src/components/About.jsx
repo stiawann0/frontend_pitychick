@@ -1,23 +1,41 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
+import apiService from "../services/apiService"; // GANTI
+import { getImageUrl } from "../services/apiService"; // GANTI
 import Button from "../layouts/Button";
 
 const About = () => {
   const [isStoryVisible, setIsStoryVisible] = useState(false);
   const [aboutData, setAboutData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get("http://localhost:8000/api/about") // ganti jika base URL berbeda
-      .then(res => {
-        setAboutData(res.data);
+    apiService.getAbout() // GANTI
+      .then(data => {
+        // Handle response structure yang berbeda
+        const aboutData = data.data || data || {};
+        setAboutData(aboutData);
       })
       .catch(err => {
         console.error("Failed to fetch about data", err);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
 
-  if (!aboutData) return <div className="text-center py-10">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading about data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!aboutData) return <div className="text-center py-10 text-red-600">Failed to load about data</div>;
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row items-center lg:px-32 px-5 py-16 gap-10 relative">
@@ -30,11 +48,14 @@ const About = () => {
         viewport={{ once: true }}
       >
         <motion.img
-          src={`http://localhost:8000/${aboutData.main_image}`} // sesuaikan path gambar
-          alt="img"
+          src={getImageUrl(aboutData.main_image)} // GANTI
+          alt="About us"
           className="w-full max-w-[280px] h-auto rounded-xl shadow-2xl shadow-black/30"
           whileHover={{ scale: 1.05, rotate: 1 }}
           transition={{ type: "spring", stiffness: 200 }}
+          onError={(e) => {
+            e.target.src = '/images/placeholder-about.jpg';
+          }}
         />
       </motion.div>
 
@@ -52,7 +73,7 @@ const About = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          {aboutData.title}
+          {aboutData.title || "About Us"}
         </motion.h1>
 
         <motion.p
@@ -60,8 +81,9 @@ const About = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
           viewport={{ once: true }}
+          className="text-gray-700"
         >
-          {aboutData.description_1}
+          {aboutData.description_1 || "No description available."}
         </motion.p>
 
         <motion.p
@@ -69,8 +91,9 @@ const About = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
           viewport={{ once: true }}
+          className="text-gray-700"
         >
-          {aboutData.description_2}
+          {aboutData.description_2 || ""}
         </motion.p>
 
         <motion.div
@@ -104,14 +127,17 @@ const About = () => {
             >
               <button
                 onClick={() => setIsStoryVisible(false)}
-                className="absolute top-2 right-2 text-xl text-gray-600 hover:text-black"
+                className="absolute top-2 right-2 text-xl text-gray-600 hover:text-black z-10"
               >
                 ✖
               </button>
               <img
-                src={`http://localhost:8000/${aboutData.story_image}`}
-                alt="Story"
+                src={getImageUrl(aboutData.story_image)} // GANTI
+                alt="Our Story"
                 className="rounded-lg max-h-[80vh] w-full object-contain"
+                onError={(e) => {
+                  e.target.src = '/images/placeholder-story.jpg';
+                }}
               />
             </motion.div>
           </motion.div>
