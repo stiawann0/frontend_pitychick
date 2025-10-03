@@ -7,26 +7,25 @@ const About = () => {
   const [isStoryVisible, setIsStoryVisible] = useState(false);
   const [aboutData, setAboutData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [imageErrors, setImageErrors] = useState({
-    main: false,
-    story: false
-  });
+  const [error, setError] = useState(null); // Tambahkan error state seperti di Home
 
   useEffect(() => {
     apiService.getAbout()
       .then(data => {
-        console.log("📊 About data received:", data);
+        console.log("About data received:", data);
         setAboutData(data);
+        setError(null); // Reset error seperti di Home
       })
       .catch(err => {
         console.error("Failed to fetch about data", err);
-        // Set fallback data dengan gambar yang work
+        setError("Failed to load about data"); // Set error seperti di Home
+        // Set fallback data seperti di Home
         setAboutData({
           title: "About PITY Chick",
           description_1: "Welcome to PITY Chick, your favorite crispy chicken destination.",
           description_2: "We serve the best quality chicken with authentic recipes that will keep you coming back for more.",
-          main_image_url: 'https://pitychick-production.up.railway.app/storage/menu-images/q6IK9Ajy5xaDO97AFJaSUZjqvSr7qofiwB7WKZk2.jpg',
-          story_image_url: 'https://pitychick-production.up.railway.app/storage/menu-images/q6IK9Ajy5xaDO97AFJaSUZjqvSr7qofiwB7WKZk2.jpg'
+          main_image_url: '/images/placeholder-about.jpg',
+          story_image_url: '/images/placeholder-story.jpg'
         });
       })
       .finally(() => {
@@ -34,21 +33,10 @@ const About = () => {
       });
   }, []);
 
-  const handleImageError = (type, url) => {
-    console.error(`❌ ${type} image failed:`, url);
-    setImageErrors(prev => ({ ...prev, [type]: true }));
-    
-    // Fallback ke gambar menu yang work
-    if (type === 'main') {
-      const imgElement = document.querySelector('.main-image');
-      if (imgElement) {
-        imgElement.src = 'https://pitychick-production.up.railway.app/storage/menu-images/q6IK9Ajy5xaDO97AFJaSUZjqvSr7qofiwB7WKZk2.jpg';
-      }
-    }
-  };
-
-  const handleImageLoad = (type, url) => {
-    console.log(`✅ ${type} image loaded:`, url);
+  // Hapus complex image error handling, biarkan browser handle fallback naturally
+  const handleImageError = (e, type) => {
+    console.error(`❌ ${type} image failed:`, e.target.src);
+    // Biarkan browser handle fallback naturally seperti di Home
   };
 
   if (loading) {
@@ -62,11 +50,11 @@ const About = () => {
     );
   }
 
-  if (!aboutData) {
+  if (error && !aboutData) {
     return (
       <div className="min-h-screen flex justify-center items-center">
         <div className="text-center text-red-600">
-          <p>Failed to load about data</p>
+          <p>{error}</p>
           <button 
             onClick={() => window.location.reload()}
             className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
@@ -78,27 +66,19 @@ const About = () => {
     );
   }
 
-  // Gunakan image_url dari apiService
+  // Gunakan data dengan default values seperti di Home
   const {
     title = "About PITY Chick",
     description_1 = "Welcome to PITY Chick, your favorite crispy chicken destination.",
     description_2 = "We serve the best quality chicken with authentic recipes that will keep you coming back for more.",
     main_image_url,
     story_image_url
-  } = aboutData;
-
-  console.log("🎯 Processed data:", {
-    title,
-    description_1,
-    description_2,
-    main_image_url,
-    story_image_url
-  });
+  } = aboutData || {};
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row items-center lg:px-32 px-5 py-16 gap-10 relative">
       
-      {/* Image Section */}
+      {/* Image Section - Sederhana seperti di Home */}
       <motion.div
         className="w-full lg:w-1/2 flex justify-center"
         initial={{ opacity: 0, y: 50 }}
@@ -106,24 +86,14 @@ const About = () => {
         transition={{ duration: 0.8, ease: "easeOut" }}
         viewport={{ once: true }}
       >
-        {main_image_url ? (
-          <motion.img
-            src={main_image_url}
-            alt={title}
-            className="main-image w-full max-w-[280px] h-64 object-cover rounded-xl shadow-2xl shadow-black/30"
-            whileHover={{ scale: 1.05, rotate: 1 }}
-            transition={{ type: "spring", stiffness: 200 }}
-            onError={(e) => handleImageError('main', main_image_url)}
-            onLoad={() => handleImageLoad('main', main_image_url)}
-          />
-        ) : (
-          <div className="w-full max-w-[280px] h-64 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center shadow-2xl shadow-black/30">
-            <div className="text-center text-gray-500">
-              <div className="text-4xl mb-2">🍗</div>
-              <p>About Image</p>
-            </div>
-          </div>
-        )}
+        <motion.img
+          src={main_image_url}
+          alt={title}
+          className="w-full max-w-[280px] h-64 object-cover rounded-xl shadow-2xl shadow-black/30"
+          whileHover={{ scale: 1.05, rotate: 1 }}
+          transition={{ type: "spring", stiffness: 200 }}
+          onError={(e) => handleImageError(e, 'main')}
+        />
       </motion.div>
 
       {/* Text Section */}
@@ -165,24 +135,23 @@ const About = () => {
           </motion.p>
         )}
 
-        {story_image_url && (
-          <motion.div
-            className="flex justify-center lg:justify-start"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.8 }}
-            viewport={{ once: true }}
-          >
-            <div onClick={() => setIsStoryVisible(true)}>
-              <Button title="Our Story" />
-            </div>
-          </motion.div>
-        )}
+        {/* Always show story button seperti di Home yang selalu show Order button */}
+        <motion.div
+          className="flex justify-center lg:justify-start"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.8 }}
+          viewport={{ once: true }}
+        >
+          <div onClick={() => setIsStoryVisible(true)}>
+            <Button title="Our Story" />
+          </div>
+        </motion.div>
       </motion.div>
 
-      {/* Story Modal */}
+      {/* Story Modal - Sederhana seperti modal di Home */}
       <AnimatePresence>
-        {isStoryVisible && story_image_url && !imageErrors.story && (
+        {isStoryVisible && (
           <motion.div
             className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
             initial={{ opacity: 0 }}
@@ -206,8 +175,7 @@ const About = () => {
                 src={story_image_url}
                 alt="Our Story"
                 className="rounded-lg max-h-[80vh] w-full object-contain"
-                onError={() => handleImageError('story', story_image_url)}
-                onLoad={() => handleImageLoad('story', story_image_url)}
+                onError={(e) => handleImageError(e, 'story')}
               />
             </motion.div>
           </motion.div>

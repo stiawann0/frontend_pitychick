@@ -66,7 +66,7 @@ export const apiService = {
     }
   },
 
-  // src/services/apiService.js - UPDATE getAbout method
+// src/services/apiService.js - UPDATE getAbout method
 async getAbout() {
   try {
     const response = await api.get('/api/about');
@@ -74,19 +74,16 @@ async getAbout() {
     
     const aboutData = response.data || {};
     
-    // Process image URLs untuk about - INI YANG DIPERBAIKI
-    const processedData = {
+    // Process image URLs sama seperti di getHomeSettings
+    return {
       ...aboutData,
       main_image_url: getImageUrl(aboutData.main_image),
       story_image_url: getImageUrl(aboutData.story_image)
     };
     
-    console.log('Processed about data:', processedData);
-    return processedData;
-    
   } catch (error) {
     console.error('Error fetching about data:', error);
-    // Return fallback dengan gambar placeholder
+    // Return fallback data seperti di Home
     return {
       title: "About PITY Chick",
       description_1: "Welcome to PITY Chick, your favorite crispy chicken destination.",
