@@ -66,33 +66,36 @@ export const apiService = {
     }
   },
 
-  // About - DIPERBAIKI: tambahkan image URL processing
-  async getAbout() {
-    try {
-      const response = await api.get('/api/about');
-      console.log('About API response:', response.data);
-      
-      const aboutData = response.data || {};
-      
-      // Process image URLs untuk about - INI YANG DIPERBAIKI
-      return {
-        ...aboutData,
-        main_image_url: getImageUrl(aboutData.main_image),
-        story_image_url: getImageUrl(aboutData.story_image)
-      };
-      
-    } catch (error) {
-      console.error('Error fetching about data:', error);
-      // Return fallback dengan image URLs yang sudah diproses
-      return {
-        title: "About PITY Chick",
-        description_1: "Welcome to PITY Chick, your favorite crispy chicken destination.",
-        description_2: "We serve the best quality chicken with authentic recipes that will keep you coming back for more.",
-        main_image_url: getImageUrl('menu-images/q6IK9Ajy5xaDO97AFJaSUZjqvSr7qofiwB7WKZk2.jpg'),
-        story_image_url: getImageUrl('menu-images/q6IK9Ajy5xaDO97AFJaSUZjqvSr7qofiwB7WKZk2.jpg')
-      };
-    }
-  },
+  // src/services/apiService.js - UPDATE getAbout method
+async getAbout() {
+  try {
+    const response = await api.get('/api/about');
+    console.log('About API raw response:', response.data);
+    
+    const aboutData = response.data || {};
+    
+    // Process image URLs untuk about - INI YANG DIPERBAIKI
+    const processedData = {
+      ...aboutData,
+      main_image_url: getImageUrl(aboutData.main_image),
+      story_image_url: getImageUrl(aboutData.story_image)
+    };
+    
+    console.log('Processed about data:', processedData);
+    return processedData;
+    
+  } catch (error) {
+    console.error('Error fetching about data:', error);
+    // Return fallback dengan gambar placeholder
+    return {
+      title: "About PITY Chick",
+      description_1: "Welcome to PITY Chick, your favorite crispy chicken destination.",
+      description_2: "We serve the best quality chicken with authentic recipes that will keep you coming back for more.",
+      main_image_url: '/images/placeholder-about.jpg',
+      story_image_url: '/images/placeholder-story.jpg'
+    };
+  }
+},
 
   // Gallery dengan image URL processing
   async getGallery() {
