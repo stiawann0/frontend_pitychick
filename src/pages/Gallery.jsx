@@ -1,23 +1,42 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FaArrowCircleLeft } from "react-icons/fa";
-import axios from "axios";
+import apiService from "../services/apiService"; // GANTI: import apiService
 
 const Gallery = () => {
   const location = useLocation();
   const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Ambil data gambar dari backend
-    axios
-      .get("http://localhost:8000/api/gallery") // sesuaikan jika baseURL berbeda
-      .then((res) => {
-        setImages(res.data);
+    // GANTI: Gunakan apiService, bukan axios dengan localhost
+    apiService.getGallery()
+      .then((galleryData) => {
+        console.log("Gallery data received:", galleryData);
+        setImages(galleryData);
+        setError(null);
       })
       .catch((err) => {
         console.error("Gagal mengambil data galeri:", err);
+        setError("Failed to load gallery data");
+        setImages([]);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading gallery...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen px-5 py-20 bg-white flex flex-col items-center relative">
@@ -32,18 +51,29 @@ const Gallery = () => {
       )}
 
       <h1 className="text-4xl font-semibold mb-10">Our Gallery</h1>
+      
+      {error && (
+        <div className="text-red-600 mb-4">
+          <p>{error}</p>
+        </div>
+      )}
+
       <div className="columns-1 sm:columns-2 md:columns-3 gap-4 space-y-4 w-full max-w-6xl">
         {images.length > 0 ? (
-          images.map((src, index) => (
+          images.map((item, index) => (
             <img
               key={index}
-              src={src}
-              alt={`gallery-${index + 1}`}
+              src={item.image_url || item.image} // Gunakan image_url dari apiService
+              alt={item.title || `gallery-${index + 1}`}
               className="w-full rounded-2xl shadow-md hover:scale-105 transition-transform duration-300"
+              onError={(e) => {
+                console.error("Gallery image failed to load:", e.target.src);
+                e.target.src = '/images/placeholder-gallery.jpg';
+              }}
             />
           ))
         ) : (
-          <p className="text-gray-500">Belum ada gambar.</p>
+          <p className="text-gray-500">No gallery images available yet.</p>
         )}
       </div>
     </div>
