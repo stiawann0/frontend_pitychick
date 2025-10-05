@@ -1,29 +1,36 @@
-// src/services/apiService.js
 import api from '../api/axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pitychick-production.up.railway.app';
 
-// Fungsi bantu untuk generate full image URL
+// Fungsi bantu untuk mendapatkan full URL gambar
 export const getImageUrl = (imagePath) => {
-  if (!imagePath) return '/placeholder-image.jpg';
+  if (!imagePath) return `${API_BASE_URL}/storage/gallery/placeholder-gallery.jpg`;
 
-  if (imagePath.startsWith('http')) {
-    return imagePath;
-  }
-
-  if (imagePath.startsWith('/storage/')) {
-    return `${API_BASE_URL}${imagePath}`;
-  }
-
-  if (imagePath.startsWith('storage/')) {
-    return `${API_BASE_URL}/${imagePath}`;
-  }
+  if (imagePath.startsWith('http')) return imagePath;
+  if (imagePath.startsWith('/storage/')) return `${API_BASE_URL}${imagePath}`;
+  if (imagePath.startsWith('storage/')) return `${API_BASE_URL}/${imagePath}`;
 
   return `${API_BASE_URL}/storage/${imagePath}`;
 };
 
 export const apiService = {
-  // Get all menu data
+  // Ambil data galeri
+  async getGallery() {
+    try {
+      const response = await api.get('/api/gallery');
+      const galleryData = response.data.data || response.data || [];
+
+      return galleryData.map(item => ({
+        ...item,
+        image_url: getImageUrl(item.image_path) // ✅ gunakan image_path dari database
+      }));
+    } catch (error) {
+      console.error('Error fetching gallery:', error);
+      return [];
+    }
+  },
+
+  // Ambil data menu
   async getMenus() {
     try {
       const response = await api.get('/api/menus');
@@ -39,7 +46,7 @@ export const apiService = {
     }
   },
 
-  // Get home page settings
+  // Ambil data home
   async getHomeSettings() {
     try {
       const response = await api.get('/api/home');
@@ -55,7 +62,7 @@ export const apiService = {
     }
   },
 
-  // Get about page data
+  // Ambil data about
   async getAbout() {
     try {
       const response = await api.get('/api/about');
@@ -78,41 +85,25 @@ export const apiService = {
     }
   },
 
-  // ✅ Perbaikan: Get gallery data (gunakan image_path)
-  async getGallery() {
-    try {
-      const response = await api.get('/api/gallery');
-      const galleryData = response.data.data || response.data || [];
-
-      return galleryData.map(item => ({
-        ...item,
-        image_url: getImageUrl(item.image)
-      }));
-    } catch (error) {
-      console.error("Error fetching gallery:", error);
-      throw error;
-    }
-  },
-
-  // Get reviews
+  // Ambil data review
   async getReviews() {
     try {
       const response = await api.get('/api/reviews');
       return response.data;
     } catch (error) {
       console.error('Error fetching reviews:', error);
-      throw error;
+      return [];
     }
   },
 
-  // Get footer data
+  // Ambil data footer
   async getFooter() {
     try {
       const response = await api.get('/api/footer');
       return response.data;
     } catch (error) {
       console.error('Error fetching footer:', error);
-      throw error;
+      return {};
     }
   }
 };
