@@ -3,107 +3,90 @@ import api from '../api/axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pitychick-production.up.railway.app';
 
-// Helper function untuk mendapatkan full image URL
+// Fungsi bantu untuk generate full image URL
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return '/placeholder-image.jpg';
-  
-  // Jika sudah full URL, return langsung
+
   if (imagePath.startsWith('http')) {
     return imagePath;
   }
-  
-  // Jika path relative, gabungkan dengan base URL
+
   if (imagePath.startsWith('/storage/')) {
     return `${API_BASE_URL}${imagePath}`;
   }
-  
-  // Jika path tanpa slash depan
+
   if (imagePath.startsWith('storage/')) {
     return `${API_BASE_URL}/${imagePath}`;
   }
-  
-  // Default case - tambahkan /storage/ jika perlu
+
   return `${API_BASE_URL}/storage/${imagePath}`;
 };
 
 export const apiService = {
-  // Menu dengan image URL processing
+  // Get all menu data
   async getMenus() {
     try {
       const response = await api.get('/api/menus');
-      console.log('Menus response:', response.data);
-      
       const menus = response.data.data || [];
-      
-      // Process image URLs untuk mendapatkan full URL
+
       return menus.map(menu => ({
         ...menu,
-        image_url: getImageUrl(menu.image) // Tambahkan property image_url
+        image_url: getImageUrl(menu.image)
       }));
-      
     } catch (error) {
       console.error('Error fetching menus:', error);
       return [];
     }
   },
 
-  // Home dengan image URL processing
+  // Get home page settings
   async getHomeSettings() {
     try {
       const response = await api.get('/api/home');
-      console.log('Home response:', response.data);
-      
       const homeData = response.data || {};
-      
+
       return {
         ...homeData,
         background_image_url: getImageUrl(homeData.background_image_url)
       };
-      
     } catch (error) {
       console.error('Error fetching home settings:', error);
       return {};
     }
   },
 
-// src/services/apiService.js - UPDATE getAbout method
-async getAbout() {
-  try {
-    const response = await api.get('/api/about');
-    console.log('About API raw response:', response.data);
-    
-    const aboutData = response.data || {};
-    
-    // Process image URLs sama seperti di getHomeSettings
-    return {
-      ...aboutData,
-      main_image_url: getImageUrl(aboutData.main_image),
-      story_image_url: getImageUrl(aboutData.story_image)
-    };
-    
-  } catch (error) {
-    console.error('Error fetching about data:', error);
-    // Return fallback data seperti di Home
-    return {
-      title: "About PITY Chick",
-      description_1: "Welcome to PITY Chick, your favorite crispy chicken destination.",
-      description_2: "We serve the best quality chicken with authentic recipes that will keep you coming back for more.",
-      main_image_url: '/images/placeholder-about.jpg',
-      story_image_url: '/images/placeholder-story.jpg'
-    };
-  }
-},
+  // Get about page data
+  async getAbout() {
+    try {
+      const response = await api.get('/api/about');
+      const aboutData = response.data || {};
 
-  // Gallery dengan image URL processing
+      return {
+        ...aboutData,
+        main_image_url: getImageUrl(aboutData.main_image),
+        story_image_url: getImageUrl(aboutData.story_image)
+      };
+    } catch (error) {
+      console.error('Error fetching about data:', error);
+      return {
+        title: "About PITY Chick",
+        description_1: "Welcome to PITY Chick, your favorite crispy chicken destination.",
+        description_2: "We serve the best quality chicken with authentic recipes that will keep you coming back for more.",
+        main_image_url: '/images/placeholder-about.jpg',
+        story_image_url: '/images/placeholder-story.jpg'
+      };
+    }
+  },
+
+  // ✅ Perbaikan: Get gallery data (gunakan image_path)
   async getGallery() {
     try {
       const response = await api.get('/api/gallery');
       const galleryData = response.data.data || response.data || [];
-      
-      // Process image URLs untuk gallery
+
       return galleryData.map(item => ({
         ...item,
-        image_url: getImageUrl(item.image)
+        image_url: getImageUrl(item.image_path)  // ✅ Gunakan field yang benar
       }));
     } catch (error) {
       console.error('Error fetching gallery:', error);
@@ -111,7 +94,7 @@ async getAbout() {
     }
   },
 
-  // Reviews
+  // Get reviews
   async getReviews() {
     try {
       const response = await api.get('/api/reviews');
@@ -122,7 +105,7 @@ async getAbout() {
     }
   },
 
-  // Footer
+  // Get footer data
   async getFooter() {
     try {
       const response = await api.get('/api/footer');
