@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FaArrowCircleLeft } from "react-icons/fa";
-import apiService from "../services/apiService"; // GANTI: import apiService
+import apiService from "../services/apiService";
 
 const Gallery = () => {
   const location = useLocation();
@@ -9,11 +9,12 @@ const Gallery = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Ganti dengan domain backend kamu jika tidak pakai .env
+  const BACKEND_URL = import.meta.env.VITE_API_URL || "https://pitychick-production.up.railway.app";
+
   useEffect(() => {
-    // GANTI: Gunakan apiService, bukan axios dengan localhost
     apiService.getGallery()
       .then((galleryData) => {
-        console.log("Gallery data received:", galleryData);
         setImages(galleryData);
         setError(null);
       })
@@ -51,7 +52,7 @@ const Gallery = () => {
       )}
 
       <h1 className="text-4xl font-semibold mb-10">Our Gallery</h1>
-      
+
       {error && (
         <div className="text-red-600 mb-4">
           <p>{error}</p>
@@ -63,12 +64,13 @@ const Gallery = () => {
           images.map((item, index) => (
             <img
               key={index}
-              src={item.image_url || item.image} // Gunakan image_url dari apiService
+              src={item.image_url || item.image}
               alt={item.title || `gallery-${index + 1}`}
               className="w-full rounded-2xl shadow-md hover:scale-105 transition-transform duration-300"
               onError={(e) => {
                 console.error("Gallery image failed to load:", e.target.src);
-                e.target.src = '/images/placeholder-gallery.jpg';
+                e.target.onerror = null; // Cegah loop
+                e.target.src = `${BACKEND_URL}/storage/gallery/placeholder-gallery.jpg`;
               }}
             />
           ))

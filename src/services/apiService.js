@@ -86,10 +86,10 @@ export const apiService = {
 
       return galleryData.map(item => ({
         ...item,
-        image_url: getImageUrl(item.image_path)  // ✅ Gunakan field yang benar
+        image_url: getImageUrl(item.image)
       }));
     } catch (error) {
-      console.error('Error fetching gallery:', error);
+      console.error("Error fetching gallery:", error);
       throw error;
     }
   },
