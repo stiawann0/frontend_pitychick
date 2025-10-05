@@ -9,18 +9,19 @@ const Gallery = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Ganti dengan domain backend kamu jika tidak pakai .env
-  const BACKEND_URL = import.meta.env.VITE_API_URL || "https://pitychick-production.up.railway.app";
-
   useEffect(() => {
     apiService.getGallery()
       .then((galleryData) => {
-        setImages(galleryData);
+        if (galleryData && galleryData.length > 0) {
+          setImages(galleryData);
+        } else {
+          setImages([]);
+        }
         setError(null);
       })
       .catch((err) => {
         console.error("Gagal mengambil data galeri:", err);
-        setError("Failed to load gallery data");
+        setError("Failed to load gallery data. Please try again later.");
         setImages([]);
       })
       .finally(() => {
@@ -54,28 +55,37 @@ const Gallery = () => {
       <h1 className="text-4xl font-semibold mb-10">Our Gallery</h1>
 
       {error && (
-        <div className="text-red-600 mb-4">
-          <p>{error}</p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 max-w-2xl w-full">
+          <p className="text-red-600 text-center">{error}</p>
         </div>
       )}
 
       <div className="columns-1 sm:columns-2 md:columns-3 gap-4 space-y-4 w-full max-w-6xl">
         {images.length > 0 ? (
           images.map((item, index) => (
-            <img
-              key={index}
-              src={item.image_url || item.image}
-              alt={item.title || `gallery-${index + 1}`}
-              className="w-full rounded-2xl shadow-md hover:scale-105 transition-transform duration-300"
-              onError={(e) => {
-                console.error("Gallery image failed to load:", e.target.src);
-                e.target.onerror = null; // Cegah loop
-                e.target.src = `${BACKEND_URL}/storage/gallery/placeholder-gallery.jpg`;
-              }}
-            />
+            <div key={item.id || index} className="break-inside-avoid">
+              <img
+                src={item.image_url}
+                alt={item.title || `Gallery image ${index + 1}`}
+                className="w-full rounded-2xl shadow-md hover:scale-105 transition-transform duration-300 cursor-pointer"
+                loading="lazy"
+                onError={(e) => {
+                  console.error(`Image failed to load: ${item.image_url}`);
+                  e.target.src = '/images/placeholder-gallery.jpg'; // Fallback lokal
+                }}
+              />
+              {item.title && (
+                <p className="mt-2 text-sm text-gray-600 text-center">{item.title}</p>
+              )}
+            </div>
           ))
         ) : (
-          <p className="text-gray-500">No gallery images available yet.</p>
+          !error && (
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-500 text-lg">No gallery images available yet.</p>
+              <p className="text-gray-400 text-sm mt-2">Check back later for updates!</p>
+            </div>
+          )
         )}
       </div>
     </div>
